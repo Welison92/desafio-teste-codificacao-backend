@@ -1,0 +1,18 @@
+# Ambiente virtual
+venv/
+
+# Ignorar arquivos compilados do Python
+*.pyc
+*.pyo
+__pycache__/
+**/__pycache__/
+
+# Ignorar arquivos de configuração do PyCharm
+.idea/
+
+# Arquivos de configuração locais
+env/
+**env/
+
+# Ignorar arquivos das migrações do alembic
+versions/
