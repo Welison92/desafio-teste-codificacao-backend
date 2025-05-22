@@ -3,20 +3,10 @@ from pydantic import BaseModel, Field
 from datetime import date
 
 
-class ProductUpdate(BaseModel):
-    description: Optional[str] = None
-    price: Optional[float] = None
-    barcode: Optional[str] = None
-    section: Optional[str] = None
-    stock: Optional[int] = None
-    expiry_date: Optional[date] = None
-    image_url: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
 class ProductOutput(BaseModel):
+    """
+    Modelo de saída para produtos.
+    """
     id: int
     description: str
     price: float
@@ -27,4 +17,7 @@ class ProductOutput(BaseModel):
     image_url: str
 
     class Config:
+        """
+        Configurações adicionais para o modelo.
+        """
         from_attributes = True

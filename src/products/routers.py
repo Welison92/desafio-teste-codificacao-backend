@@ -8,9 +8,11 @@ from sqlalchemy.orm import Session
 # Imports locais
 from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
+from src.auth.jwt_auth import get_current_user
+from src.clients.models import ClientModel
 from src.products.crud import get_product_by_id, get_product_by_barcode
 from src.products.models import ProductModel
-from src.products.schemas import ProductOutput, ProductCreate
+from src.products.schemas import ProductOutput
 from pathlib import Path
 from sqlalchemy.sql import func
 
@@ -27,7 +29,7 @@ IMAGES_DIR = BASE_DIR / "static" / "images"  # Diretório das imagens
 async def get_product(
         product_id: int,
         db: Session = Depends(get_db),
-        # current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
     Obtém um produto pelo ID.
@@ -37,7 +39,7 @@ async def get_product(
         db (Session): Sessão do banco de dados.
         current_user (ClientModel): Cliente autenticado.
     Returns:
-        ProductModel: Instância do modelo de produto.
+        ProductOutput: Detalhes do produto.
     """
     product = get_product_by_id(product_id, db)
 
@@ -61,7 +63,8 @@ async def get_products(
         available: bool = None,
         page: int = 1,
         limit: int = 10,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
     Obtém uma lista de produtos com suporte a paginação e filtros.
@@ -73,6 +76,7 @@ async def get_products(
         page (int): Número da página.
         limit (int): Limite de produtos por página.
         db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
     Returns:
         list[ProductModel]: Lista de produtos filtrados e paginados.
     """
@@ -104,7 +108,8 @@ async def create_product(
         stock : int,
         expiry_date : str = None,
         db: Session = Depends(get_db),
-        arquivo: UploadFile = File(...)
+        arquivo: UploadFile = File(...),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
     Cria um novo produto.
@@ -118,8 +123,9 @@ async def create_product(
         expiry_date (str): Data de validade do produto (opcional).
         db (Session): Sessão do banco de dados.
         arquivo (UploadFile): Arquivo da imagem do produto.
+        current_user (ClientModel): Cliente autenticado.
     Returns:
-        ProductModel: Instância do modelo de produto criado.
+        SuccessResponse: Resposta de sucesso.
     """
     barcode_model = get_product_by_barcode(barcode, db)
 
@@ -163,4 +169,134 @@ async def create_product(
     return SuccessResponse(
         data=None,
         message="Produto criado com sucesso"
+    )
+
+
+@router.put("/update_product/{product_id}", summary="Atualizar informações de um produto específico")
+async def update_product(
+        product_id: int,
+        description: str = None,
+        price: float = None,
+        barcode: str = None,
+        section: str = None,
+        stock: int = None,
+        expiry_date: str = None,
+        db: Session = Depends(get_db),
+        arquivo: UploadFile = File(None),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+):
+    """
+    Atualiza um produto existente.
+
+    Args:
+        product_id (int): ID do produto a ser atualizado.
+        description (str): Nova descrição do produto (opcional).
+        price (float): Novo preço do produto (opcional).
+        barcode (str): Novo código de barras do produto (opcional).
+        section (str): Nova seção do produto (opcional).
+        stock (int): Novo estoque do produto (opcional).
+        expiry_date (str): Nova data de validade do produto (opcional).
+        db (Session): Sessão do banco de dados.
+        arquivo (UploadFile): Novo arquivo da imagem do produto (opcional).
+        current_user (ClientModel): Cliente autenticado.
+    Returns:
+        SuccessResponse: Resposta de sucesso.
+    """
+    product = get_product_by_id(product_id, db)
+
+    if not product:
+        raise APIException(
+            code=404,
+            message="Produto não encontrado",
+            description="O produto com o ID informado não foi encontrado"
+        )
+
+    if description:
+        product.description = description
+
+    if price:
+        product.price = price
+
+    if barcode:
+        barcode_model = get_product_by_barcode(barcode, db)
+
+        if barcode_model:
+            raise APIException(
+                code=400,
+                message="Código de barras já cadastrado",
+                description="O código de barras informado já está cadastrado no sistema"
+            )
+
+        product.barcode = barcode
+
+    if section:
+        product.section = section
+
+    if stock:
+        product.stock = stock
+
+    if expiry_date:
+        product.expiry_date = expiry_date
+
+    if arquivo:
+        # Evita sobreposição de arquivos com o mesmo nome
+        arquivo.filename = f'{product_id}_{arquivo.filename}'
+
+        # Constroi o caminho completo do arquivo
+        caminho_arquivo = f'{IMAGES_DIR / arquivo.filename}'
+
+        with open(caminho_arquivo, "wb+") as objeto_arquivo:
+            objeto_arquivo.write(arquivo.file.read())
+
+        # Deleta o arquivo antigo se existir
+        if Path(product.image_url).exists():
+            Path(product.image_url).unlink()
+
+        # Atualiza a URL da imagem no banco de dados
+        product.image_url = caminho_arquivo
+
+    db.commit()
+    db.refresh(product)
+
+    return SuccessResponse(
+        data=None,
+        message="Produto atualizado com sucesso"
+    )
+
+
+@router.delete("/delete_product/{product_id}", summary="Excluir um produto")
+async def delete_product(
+        product_id: int,
+        db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+):
+    """
+    Exclui um produto existente.
+
+    Args:
+        product_id (int): ID do produto a ser excluído.
+        db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
+    Returns:
+        SuccessResponse: Resposta de sucesso.
+    """
+    product = get_product_by_id(product_id, db)
+
+    if not product:
+        raise APIException(
+            code=404,
+            message="Produto não encontrado",
+            description="O produto com o ID informado não foi encontrado"
+        )
+
+    # Deleta o arquivo da imagem se existir
+    if Path(product.image_url).exists():
+        Path(product.image_url).unlink()
+
+    db.delete(product)
+    db.commit()
+
+    return SuccessResponse(
+        data=None,
+        message="Produto excluído com sucesso"
     )
