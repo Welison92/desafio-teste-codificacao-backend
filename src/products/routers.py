@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 # Imports locais
 from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
-from src.products.crud import get_product_by_id
+from src.products.crud import get_product_by_id, get_product_by_barcode
 from src.products.models import ProductModel
 from src.products.schemas import ProductOutput, ProductCreate
 from pathlib import Path
@@ -22,7 +22,6 @@ router = APIRouter(
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Raiz do projeto
 IMAGES_DIR = BASE_DIR / "static" / "images"  # Diretório das imagens
-
 
 @router.get("/get_detail_product/{product_id}", summary="Obter informações de um produto específico")
 async def get_product(
@@ -98,7 +97,12 @@ async def get_products(
 
 @router.post("/create_product", summary="Criar um novo produto, contendo os seguintes atributos: descrição, valor de venda, código de barras, seção, estoque inicial, e data de validade (quando aplicável) e imagens.")
 async def create_product(
-        product: ProductCreate,
+        description : str,
+        price : float,
+        barcode : str,
+        section : str,
+        stock : int,
+        expiry_date : str = None,
         db: Session = Depends(get_db),
         arquivo: UploadFile = File(...)
 ):
@@ -106,12 +110,26 @@ async def create_product(
     Cria um novo produto.
 
     Args:
-        product (ProductCreate): Dados do produto a ser criado.
+        description (str): Descrição do produto.
+        price (float): Preço do produto.
+        barcode (str): Código de barras do produto.
+        section (str): Seção do produto.
+        stock (int): Estoque inicial do produto.
+        expiry_date (str): Data de validade do produto (opcional).
         db (Session): Sessão do banco de dados.
-        arquivo (UploadFile): Arquivo de imagem do produto.
+        arquivo (UploadFile): Arquivo da imagem do produto.
     Returns:
         ProductModel: Instância do modelo de produto criado.
     """
+    barcode_model = get_product_by_barcode(barcode, db)
+
+    if barcode_model:
+        raise APIException(
+            code=400,
+            message="Código de barras já cadastrado",
+            description="O código de barras informado já está cadastrado no sistema"
+        )
+
     # Certifique-se de que o diretório de imagens existe
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -127,21 +145,21 @@ async def create_product(
     # Salva o arquivo no diretório de imagens
     with open(caminho_arquivo, "wb+") as objeto_arquivo:
         objeto_arquivo.write(arquivo.file.read())
-    
+
     novo_produto = ProductModel(
-        description=product.description,
-        price=product.price,
-        barcode=product.barcode,
-        section=product.section,
-        stock=product.stock,
-        expiry_date=product.expiry_date,
+        description=description,
+        price=price,
+        barcode=barcode,
+        section=section,
+        stock=stock,
+        expiry_date=expiry_date,
         image_url=caminho_arquivo
     )
 
     db.add(novo_produto)
     db.commit()
     db.refresh(novo_produto)
-    print(novo_produto.__dict__)
+
     return SuccessResponse(
         data=None,
         message="Produto criado com sucesso"
