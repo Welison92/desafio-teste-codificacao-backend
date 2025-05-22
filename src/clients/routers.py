@@ -1,6 +1,7 @@
 # Imports de terceiros
 import re
 from importlib.metadata import requires
+from typing import Annotated
 
 from fastapi import APIRouter, File, UploadFile
 from fastapi.params import Depends
@@ -10,33 +11,33 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
 from src.auth.crud import get_user_by_email
-from src.auth.jwt_auth import require_role
+from src.auth.jwt_auth import require_role, get_current_user
 from src.clients.crud import get_client_by_email, get_client_by_cpf, get_client_by_id
 from src.clients.models import ClientModel
 from src.clients.schemas import ClientCreate, ClientOutput, ClientUpdate
 
 router = APIRouter(
-    prefix="/cliets",
-    tags=["cliets"],
+    prefix="/clients",
+    tags=["clients"],
     responses={404: {"description": "Not found"}},
 )
 
 
-@router.get("/get_detail_client/{id_client}", summary="Obter informações de um cliente específico")
+@router.get("/get_detail_client", summary="Obter informações de um cliente específico")
 async def get_client(
-        id_client: int,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
     Obtém um cliente pelo ID.
 
     Args:
-        id_client (int): ID do cliente a ser buscado.
         db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
     Returns:
         ClientModel: Instância do modelo de cliente.
     """
-    client = get_client_by_id(id_client, db)
+    client = get_client_by_id(current_user.id, db)
 
     if not client:
         raise APIException(
@@ -58,7 +59,8 @@ async def get_clients(
         email: str = None,
         page: int = 1,
         limit: int = 10,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
     Obtém uma lista de clientes.
@@ -69,6 +71,7 @@ async def get_clients(
         page (int): Número da página para paginação.
         limit (int): Limite de resultados por página.
         db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados dos clientes encontrados.
     """
@@ -88,11 +91,11 @@ async def get_clients(
     )
 
 
-# current_user: ClientModel = Depends(require_role("admin"))
 @router.post("/create_client", summary=" Criar um novo cliente, validando email e CPF únicos")
 async def create_client(
         client: ClientCreate,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
     Cria um novo cliente.
@@ -100,6 +103,7 @@ async def create_client(
     Args:
         client (ClientCreate): Dados do cliente a ser criado.
         db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados do cliente criado.
     """
@@ -165,23 +169,24 @@ async def create_client(
     )
 
 
-@router.put("/update_client/{id_client}", summary="Atualizar informações de um cliente específico")
+@router.put("/update_client", summary="Atualizar informações de um cliente específico")
 async def update_client(
-        id_client: int,
         client: ClientUpdate,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
     Atualiza as informações de um cliente.
 
     Args:
-        id_client (int): ID do cliente a ser atualizado.
         client (ClientUpdate): Dados do cliente a serem atualizados.
         db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados do cliente atualizado.
     """
-    client_model = get_client_by_id(id_client, db)
+    # client_model = get_client_by_id(id_client, db)
+    client_model = get_client_by_id(current_user.id, db)
 
     if not client_model:
         raise APIException(
@@ -269,19 +274,19 @@ async def update_client(
 
 @router.delete("/delete_client/{id_client}", summary="Excluir um cliente")
 async def delete_client(
-        id_client: int,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
     Deleta um cliente.
 
     Args:
-        id_client (int): ID do cliente a ser deletado.
         db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados do cliente deletado.
     """
-    client_model = get_client_by_id(id_client, db)
+    client_model = get_client_by_id(current_user.id, db)
 
     if not client_model:
         raise APIException(
