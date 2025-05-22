@@ -1,5 +1,5 @@
 # Imports de terceiros
-from typing import Annotated
+from typing import Annotated, List
 
 from fastapi import APIRouter, UploadFile, File
 from fastapi.params import Depends
@@ -11,7 +11,7 @@ from core.exceptions import APIException, SuccessResponse
 from src.auth.jwt_auth import get_current_user
 from src.clients.models import ClientModel
 from src.products.crud import get_product_by_id, get_product_by_barcode
-from src.products.models import ProductModel
+from src.products.models import ProductModel, ProductImageModel
 from src.products.schemas import ProductOutput
 from pathlib import Path
 from sqlalchemy.sql import func
@@ -24,6 +24,7 @@ router = APIRouter(
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Raiz do projeto
 IMAGES_DIR = BASE_DIR / "static" / "images"  # Diretório das imagens
+
 
 @router.get("/get_detail_product/{product_id}", summary="Obter informações de um produto específico")
 async def get_product(
@@ -56,7 +57,8 @@ async def get_product(
     )
 
 
-@router.get("/get_products", summary="Listar todos os produtos, com suporte a paginação e filtros por categoria, preço e disponibilidade")
+@router.get("/get_products",
+            summary="Listar todos os produtos, com suporte a paginação e filtros por categoria, preço e disponibilidade")
 async def get_products(
         category: str = None,
         price: float = None,
@@ -99,20 +101,21 @@ async def get_products(
     )
 
 
-@router.post("/create_product", summary="Criar um novo produto, contendo os seguintes atributos: descrição, valor de venda, código de barras, seção, estoque inicial, e data de validade (quando aplicável) e imagens.")
+@router.post("/create_product",
+             summary="Criar um novo produto, contendo os seguintes atributos: descrição, valor de venda, código de barras, seção, estoque inicial, data de validade (quando aplicável) e várias imagens.")
 async def create_product(
-        description : str,
-        price : float,
-        barcode : str,
-        section : str,
-        stock : int,
-        expiry_date : str = None,
+        description: str,
+        price: float,
+        barcode: str,
+        section: str,
+        stock: int,
+        expiry_date: str = None,
         db: Session = Depends(get_db),
-        arquivo: UploadFile = File(...),
+        files: List[UploadFile] = File(...),  # Alterado para aceitar lista de arquivos
         current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
-    Cria um novo produto.
+    Cria um novo produto com suporte a múltiplas imagens.
 
     Args:
         description (str): Descrição do produto.
@@ -122,11 +125,12 @@ async def create_product(
         stock (int): Estoque inicial do produto.
         expiry_date (str): Data de validade do produto (opcional).
         db (Session): Sessão do banco de dados.
-        arquivo (UploadFile): Arquivo da imagem do produto.
+        files (List[UploadFile]): Lista de arquivos de imagens do produto.
         current_user (ClientModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso.
     """
+    # Verifica se o código de barras já existe
     barcode_model = get_product_by_barcode(barcode, db)
 
     if barcode_model:
@@ -142,29 +146,40 @@ async def create_product(
     # Obtém o maior ID existente ou 0 se a tabela estiver vazia
     ultimo_id = db.query(func.max(ProductModel.id)).scalar() or 0
 
-    # Evita sobreposição de arquivos com o mesmo nome
-    arquivo.filename = f'{ultimo_id + 1}_{arquivo.filename}'
-
-    # Constroi o caminho completo do arquivo
-    caminho_arquivo = f'{IMAGES_DIR / arquivo.filename}'
-
-    # Salva o arquivo no diretório de imagens
-    with open(caminho_arquivo, "wb+") as objeto_arquivo:
-        objeto_arquivo.write(arquivo.file.read())
-
+    # Cria o produto no banco de dados
     novo_produto = ProductModel(
         description=description,
         price=price,
         barcode=barcode,
         section=section,
         stock=stock,
-        expiry_date=expiry_date,
-        image_url=caminho_arquivo
+        expiry_date=expiry_date
     )
 
     db.add(novo_produto)
     db.commit()
     db.refresh(novo_produto)
+
+    # Salva cada imagem e associa ao produto
+    for index, arquivo in enumerate(files):
+        # Gera um nome único para cada arquivo
+        extensao = arquivo.filename.split('.')[-1]
+        nome_arquivo = f"{ultimo_id + 1}_{index + 1}.{extensao}"
+        caminho_arquivo = IMAGES_DIR / nome_arquivo
+
+        # Salva o arquivo no diretório
+        with open(caminho_arquivo, "wb") as objeto_arquivo:
+            objeto_arquivo.write(await arquivo.read())
+
+        # Cria uma entrada na tabela product_images
+        nova_imagem = ProductImageModel(
+            product_id=novo_produto.id,
+            image_url=str(caminho_arquivo)
+        )
+
+        db.add(nova_imagem)
+
+    db.commit()
 
     return SuccessResponse(
         data=None,
@@ -182,11 +197,11 @@ async def update_product(
         stock: int = None,
         expiry_date: str = None,
         db: Session = Depends(get_db),
-        arquivo: UploadFile = File(None),
+        files: List[UploadFile] = File(None),
         current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
-    Atualiza um produto existente.
+    Atualiza um produto existente e, opcionalmente, adiciona ou substitui imagens.
 
     Args:
         product_id (int): ID do produto a ser atualizado.
@@ -197,7 +212,7 @@ async def update_product(
         stock (int): Novo estoque do produto (opcional).
         expiry_date (str): Nova data de validade do produto (opcional).
         db (Session): Sessão do banco de dados.
-        arquivo (UploadFile): Novo arquivo da imagem do produto (opcional).
+        files (List[UploadFile]): Lista de novos arquivos de imagem (opcional).
         current_user (ClientModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso.
@@ -220,7 +235,7 @@ async def update_product(
     if barcode:
         barcode_model = get_product_by_barcode(barcode, db)
 
-        if barcode_model:
+        if barcode_model and barcode_model.id != product_id:
             raise APIException(
                 code=400,
                 message="Código de barras já cadastrado",
@@ -238,22 +253,31 @@ async def update_product(
     if expiry_date:
         product.expiry_date = expiry_date
 
-    if arquivo:
-        # Evita sobreposição de arquivos com o mesmo nome
-        arquivo.filename = f'{product_id}_{arquivo.filename}'
+    if files:
+        # Deleta o arquivo da imagem se existir
+        for image in product.images:
+            if Path(image.image_url).exists():
+                Path(image.image_url).unlink()
 
-        # Constroi o caminho completo do arquivo
-        caminho_arquivo = f'{IMAGES_DIR / arquivo.filename}'
+        db.query(ProductImageModel).filter(ProductImageModel.product_id == product_id).delete()
 
-        with open(caminho_arquivo, "wb+") as objeto_arquivo:
-            objeto_arquivo.write(arquivo.file.read())
+        # Certifique-se de que o diretório de imagens existe
+        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Deleta o arquivo antigo se existir
-        if Path(product.image_url).exists():
-            Path(product.image_url).unlink()
+        for index, arquivo in enumerate(files):
+            extensao = Path(arquivo.filename).suffix
+            nome_arquivo = f"{product_id}_{index + 1}{extensao}"
+            caminho_arquivo = IMAGES_DIR / nome_arquivo
 
-        # Atualiza a URL da imagem no banco de dados
-        product.image_url = caminho_arquivo
+            with open(caminho_arquivo, "wb") as objeto_arquivo:
+                objeto_arquivo.write(await arquivo.read())
+
+            nova_imagem = ProductImageModel(
+                product_id=product_id,
+                image_url=str(caminho_arquivo)
+            )
+
+            db.add(nova_imagem)
 
     db.commit()
     db.refresh(product)
@@ -290,8 +314,9 @@ async def delete_product(
         )
 
     # Deleta o arquivo da imagem se existir
-    if Path(product.image_url).exists():
-        Path(product.image_url).unlink()
+    for image in product.images:
+        if Path(image.image_url).exists():
+            Path(image.image_url).unlink()
 
     db.delete(product)
     db.commit()
