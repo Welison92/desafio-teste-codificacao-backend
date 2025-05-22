@@ -118,12 +118,11 @@ async def create_client(
 
     user_email = get_user_by_email(client.email, db)
 
-    # Verifica se o email já está cadastrado
-    if user_email:
+    if not user_email:
         raise APIException(
-            code=400,
-            message="Email já cadastrado",
-            description="O email informado já está cadastrado no sistema"
+            code=404,
+            message="Email não cadastrado",
+            description="O email informado não está cadastrado no sistema. Cadastre o usuário antes de cadastrar o cliente"
         )
 
     # Expressão regular para CPF

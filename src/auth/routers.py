@@ -40,23 +40,22 @@ async def create_user(user: UserAuth, db: Session = Depends(get_db)):
     """
 
     user_email = get_user_by_email(user.email, db)
-
     client_email = get_client_by_email(user.email, db)
 
     # Verifica se o email já está cadastrado
-    if user_email:
+    if user_email or client_email:
         raise APIException(
             code=400,
             message="Email já cadastrado",
             description="O email informado já está cadastrado no sistema"
         )
 
-    if not client_email:
-        raise APIException(
-            code=400,
-            message="Email não cadastrado",
-            description="O email informado não está cadastrado no sistema. Cadastre o cliente antes de criar o usuário"
-        )
+    # if not client_email:
+    #     raise APIException(
+    #         code=404,
+    #         message="Email não cadastrado",
+    #         description="O email informado não está cadastrado no sistema. Cadastre o cliente antes de criar o usuário"
+    #     )
 
     user_model = UserModel(
         email=user.email,
