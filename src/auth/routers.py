@@ -2,7 +2,6 @@
 from fastapi import APIRouter, Body, HTTPException
 from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from passlib.handlers.des_crypt import des_crypt
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from starlette import status

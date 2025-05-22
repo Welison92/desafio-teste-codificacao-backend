@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 
 from src.clients.models import ClientModel
-from src.clients.schemas import ClientUpdate
 
 
 def get_client_by_email(
@@ -53,22 +52,3 @@ def get_client_by_cpf(
         encontrado.
     """
     return db.query(ClientModel).filter(ClientModel.cpf == cpf).first()
-
-
-def update_client(
-        client: ClientUpdate,
-        db: Session
-):
-    """
-    Atualiza os dados de um cliente.
-
-    Args:
-        client (ClientModel): Instância do modelo de cliente a ser atualizado.
-        db (Session): Sessão do banco de dados.
-    Returns:
-        ClientModel: Instância do modelo de cliente atualizado.
-    """
-    db.add(client)
-    db.commit()
-    db.refresh(client)
-    return client

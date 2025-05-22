@@ -1,9 +1,8 @@
 # Imports de terceiros
 import re
-from importlib.metadata import requires
 from typing import Annotated
 
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
@@ -11,7 +10,7 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
 from src.auth.crud import get_user_by_email
-from src.auth.jwt_auth import require_role, get_current_user
+from src.auth.jwt_auth import get_current_user
 from src.clients.crud import get_client_by_email, get_client_by_cpf, get_client_by_id
 from src.clients.models import ClientModel
 from src.clients.schemas import ClientCreate, ClientOutput, ClientUpdate
@@ -48,7 +47,7 @@ async def get_client(
 
     return SuccessResponse(
         data=ClientOutput(**client.__dict__),
-        message="Dados do cliente retornados com sucesso"
+        message="Dados do cliente retornado com sucesso"
     )
 
 
@@ -272,7 +271,7 @@ async def update_client(
     )
 
 
-@router.delete("/delete_client/{id_client}", summary="Excluir um cliente")
+@router.delete("/delete_client", summary="Excluir um cliente")
 async def delete_client(
         db: Session = Depends(get_db),
         current_user: Annotated[ClientModel, Depends(get_current_user)] = None

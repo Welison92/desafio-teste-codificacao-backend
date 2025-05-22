@@ -7,7 +7,7 @@ from starlette.responses import JSONResponse
 from core.exceptions import APIException
 from src.auth.routers import router as auth_router
 from src.clients.routers import router as client_router
-
+from src.products.routers import router as product_router
 
 # Inicialização do FastAPI
 app = FastAPI(
@@ -27,6 +27,7 @@ app.add_middleware(
 # Rotas/Controles
 app.include_router(auth_router)
 app.include_router(client_router)
+app.include_router(product_router)
 
 
 # Manipulador de exceções para APIException
