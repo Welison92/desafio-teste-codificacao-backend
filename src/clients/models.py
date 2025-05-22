@@ -15,4 +15,4 @@ class ClientModel(Base):
     cpf = Column(String, unique=True, nullable=False)
     phone = Column(String, nullable=False)
 
-    orders = relationship("Order", back_populates="client", cascade="all, delete-orphan")
+    # orders = relationship("OrderModel", back_populates="client", cascade="all, delete-orphan")

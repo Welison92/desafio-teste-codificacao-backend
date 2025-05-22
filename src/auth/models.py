@@ -17,5 +17,5 @@ class UserModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True)
     hashed_password = Column(String)
-    role = Column(Enum(UserRole), default=UserRole.USER)
+    # role = Column(Enum(UserRole), default=UserRole.USER)
 

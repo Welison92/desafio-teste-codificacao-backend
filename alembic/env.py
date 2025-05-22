@@ -10,11 +10,11 @@ from sqlalchemy import engine_from_config, pool
 # Imports locais
 from core.config import settings
 from core.database import Base
-from src.models.client_model import ClientModel
-from src.models.order_item_model import OrderItemModel
-from src.models.order_model import OrderModel
-from src.models.product_model import ProductModel
-from src.models.user_model import UserModel
+from src.auth.models import UserModel
+from src.clients.models import ClientModel
+from src.orders.models import OrderModel, OrderItemModel
+from src.products.models import ProductModel
+
 
 load_dotenv(path.join(path.dirname(__file__), '../env/.env'))
 
