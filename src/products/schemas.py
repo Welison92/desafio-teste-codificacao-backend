@@ -22,9 +22,6 @@ class ProductCreate(BaseModel):
     expiry_date: Optional[date] = Field(
         None, description="Data de validade do produto"
     )
-    image_url: str = Field(
-        ..., description="URL da imagem do produto"
-    )
 
     class Config:
         from_attributes = True

@@ -2,6 +2,7 @@
 from fastapi import FastAPI, Request
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 # Imports locais
 from core.exceptions import APIException
@@ -14,6 +15,9 @@ app = FastAPI(
     title="Lu Estilo API",
     version="1.0.0"
 )
+
+# Monta a pasta 'static' para servir arquivos estáticos
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Middlewares
 app.add_middleware(
