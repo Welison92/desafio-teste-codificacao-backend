@@ -360,3 +360,50 @@ def update_order(
         data=None,
         message="Pedido atualizado com sucesso"
     )
+
+@router.delete("/delete_order/{order_id}", summary="Excluir um pedido")
+def delete_order(
+        order_id: int,
+        db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+):
+    """
+    Exclui um pedido existente.
+
+    Args:
+        order_id (int): ID do pedido a ser excluído.
+        db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
+    Returns:
+        SuccessResponse: Resposta de sucesso com os dados do pedido excluído.
+    """
+    order_model = get_order_by_id(order_id, db)
+
+    if not order_model:
+        raise APIException(
+            code=404,
+            message="Pedido não encontrado",
+            description=f"Pedido com ID {order_id} não foi encontrado"
+        )
+
+    if order_model.client_id != current_user.id:
+        raise APIException(
+            code=403,
+            message="Acesso negado",
+            description="Você não tem permissão para excluir este pedido"
+        )
+
+    # Reverter o estoque dos itens do pedido
+    for item in order_model.items:
+        product = get_product_by_id(item.product_id, db)
+        product.stock += item.quantity
+        db.add(product)
+
+    # Excluir o pedido
+    db.delete(order_model)
+    db.commit()
+
+    return SuccessResponse(
+        data=None,
+        message="Pedido excluído com sucesso"
+    )
