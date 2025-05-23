@@ -14,6 +14,8 @@ from src.auth.jwt_auth import get_current_user
 from src.clients.crud import get_client_by_email, get_client_by_cpf, get_client_by_id
 from src.clients.models import ClientModel
 from src.clients.schemas import ClientCreate, ClientOutput, ClientUpdate
+from src.orders.models import OrderModel
+from src.products.crud import get_product_by_id
 
 router = APIRouter(
     prefix="/clients",
@@ -292,6 +294,17 @@ async def delete_client(
             message="Cliente não encontrado",
             description=f"O cliente com o ID {current_user.id} não foi encontrado"
         )
+
+    # Buscar todos os pedidos associados ao cliente
+    orders = db.query(OrderModel).filter(OrderModel.client_id == client_model.id).all()
+
+    if orders:
+        for order in orders:
+            # Reverter o estoque dos itens do pedido
+            for item in order.items:
+                product = get_product_by_id(item.product_id, db)
+                product.stock += item.quantity
+                db.add(product)
 
     # Verifica se o cliente está associado a algum usuário
     user = get_user_by_email(client_model.email, db)
