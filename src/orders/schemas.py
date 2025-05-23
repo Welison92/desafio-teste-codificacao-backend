@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List
 
-from sqlalchemy import Enum
+from enum import Enum
 
 
 class OrderItem(BaseModel):
@@ -18,6 +18,38 @@ class CreateOrder(BaseModel):
     """
     client_id: int
     items: List[OrderItem]
+
+    class Config:
+        """
+        Configurações adicionais para o modelo.
+        """
+        from_attributes = True
+
+
+class UpdateOrder(BaseModel):
+    """
+    Schema para atualização de um pedido existente.
+    """
+    items: List[OrderItem] = None
+
+    class Config:
+        """
+        Configurações adicionais para o modelo.
+        """
+        from_attributes = True
+
+
+class OrderOutput(BaseModel):
+    """
+    Schema para a saída de um pedido.
+    """
+    id: int
+    client_id: int
+    status: str
+    created_at: str
+    items: List[OrderItem]
+    total_itens: int
+    total_price: float
 
     class Config:
         """
