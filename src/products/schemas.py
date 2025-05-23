@@ -1,5 +1,5 @@
-from typing import Optional
-from pydantic import BaseModel, Field
+from typing import Optional, List
+from pydantic import BaseModel
 from datetime import date
 
 
@@ -14,7 +14,7 @@ class ProductOutput(BaseModel):
     section: str
     stock: int
     expiry_date: Optional[date]
-    image_url: str
+    url_images: List
 
     class Config:
         """

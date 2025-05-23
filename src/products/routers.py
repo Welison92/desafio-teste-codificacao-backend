@@ -33,16 +33,17 @@ async def get_product(
         current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
-    Obtém um produto pelo ID.
+    Obtém um produto pelo ID, incluindo as URLs das imagens associadas.
 
     Args:
         product_id (int): ID do produto.
         db (Session): Sessão do banco de dados.
         current_user (ClientModel): Cliente autenticado.
     Returns:
-        ProductOutput: Detalhes do produto.
+        SuccessResponse: Detalhes do produto, incluindo lista de URLs de imagens.
     """
-    product = get_product_by_id(product_id, db)
+
+    product = db.query(ProductModel).filter(ProductModel.id == product_id).first()
 
     if not product:
         raise APIException(
@@ -51,11 +52,22 @@ async def get_product(
             description="O produto com o ID informado não foi encontrado"
         )
 
-    return SuccessResponse(
-        data=ProductOutput(**product.__dict__),
-        message="Dados do produto retornado com sucesso"
+
+    product_data = ProductOutput(
+        id=product.id,
+        description=product.description,
+        price=product.price,
+        barcode=product.barcode,
+        section=product.section,
+        stock=product.stock,
+        expiry_date=product.expiry_date,
+        url_images=[image.image_url for image in product.images]
     )
 
+    return SuccessResponse(
+        data=product_data,
+        message="Dados do produto retornado com sucesso"
+    )
 
 @router.get("/get_products",
             summary="Listar todos os produtos, com suporte a paginação e filtros por categoria, preço e disponibilidade")
@@ -96,7 +108,18 @@ async def get_products(
     products = products.offset((page - 1) * limit).limit(limit).all()
 
     return SuccessResponse(
-        data=[ProductOutput(**product.__dict__) for product in products],
+        data=[
+            ProductOutput(
+                id=product.id,
+                description=product.description,
+                price=product.price,
+                barcode=product.barcode,
+                section=product.section,
+                stock=product.stock,
+                expiry_date=product.expiry_date,
+                url_images=[image.image_url for image in product.images]
+            ) for product in products
+        ],
         message="Lista de produtos retornada com sucesso"
     )
 
