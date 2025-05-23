@@ -90,7 +90,7 @@ async def get_clients(
     )
 
 
-@router.post("/create_client", summary=" Criar um novo cliente, validando email e CPF únicos")
+@router.post("/create_client", summary=" Criar um novo cliente, validando email e CPF")
 async def create_client(
         client: ClientCreate,
         db: Session = Depends(get_db),
