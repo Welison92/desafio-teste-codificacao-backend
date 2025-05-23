@@ -16,3 +16,6 @@ env/
 
 # Ignorar arquivos das migrações do alembic
 versions/
+
+# Ignorar as imagens da pasta de estáticos
+static/

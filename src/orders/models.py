@@ -14,7 +14,7 @@ class OrderModel(Base):
     created_at = Column(DateTime, nullable=False)
 
     client = relationship("ClientModel", back_populates="orders")
-    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    items = relationship("OrderItemModel", back_populates="order", cascade="all, delete-orphan")
 
 
 class OrderItemModel(Base):

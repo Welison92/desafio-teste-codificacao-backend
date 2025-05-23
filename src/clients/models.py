@@ -1,4 +1,6 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
+
 from core.database import Base
 
 class ClientModel(Base):
@@ -14,4 +16,5 @@ class ClientModel(Base):
     cpf = Column(String, unique=True, nullable=False)
     phone = Column(String, nullable=False)
 
-    # orders = relationship("OrderModel", back_populates="client", cascade="all, delete-orphan")
+    # Relacionamento com a tabela de pedidos
+    orders = relationship("OrderModel", back_populates="client", cascade="all, delete-orphan")
