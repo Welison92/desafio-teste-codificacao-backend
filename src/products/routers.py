@@ -49,7 +49,7 @@ async def get_product(
         raise APIException(
             code=404,
             message="Produto não encontrado",
-            description="O produto com o ID informado não foi encontrado"
+            description=f"O produto com o ID {product_id} não foi encontrado"
         )
 
 
@@ -246,7 +246,7 @@ async def update_product(
         raise APIException(
             code=404,
             message="Produto não encontrado",
-            description="O produto com o ID informado não foi encontrado"
+            description=f"O produto com o ID {product_id} não foi encontrado"
         )
 
     if description:
@@ -333,7 +333,7 @@ async def delete_product(
         raise APIException(
             code=404,
             message="Produto não encontrado",
-            description="O produto com o ID informado não foi encontrado"
+            description=f"O produto com o ID {product_id} não foi encontrado"
         )
 
     # Deleta o arquivo da imagem se existir

@@ -103,7 +103,7 @@ def get_orders(
             raise APIException(
                 code=404,
                 message="Pedido não encontrado",
-                description=f"Pedido com ID {order_id} não encontrado"
+                description=f"Pedido com ID {order_id} não foi encontrado"
             )
 
     if client_id:
@@ -113,7 +113,7 @@ def get_orders(
             raise APIException(
                 code=404,
                 message="Cliente não encontrado",
-                description=f"Cliente com ID {client_id} não encontrado"
+                description=f"Cliente com ID {client_id} não foi encontrado"
             )
 
     if status:
@@ -123,7 +123,7 @@ def get_orders(
             raise APIException(
                 code=404,
                 message="Pedido não encontrado",
-                description=f"Pedido com status {status} não encontrado"
+                description=f"Pedido com status {status} não foi encontrado"
             )
 
     if category:
@@ -162,7 +162,7 @@ def get_orders(
                 raise APIException(
                     code=404,
                     message="Nenhum pedido encontrado",
-                    description=f"Nenhum pedido encontrado para o intervalo de datas especificado"
+                    description=f"Nenhum pedido encontrado entre as datas {start_date} e {end_date}"
                 )
         except ValueError:
             raise APIException(
@@ -195,7 +195,7 @@ def get_orders(
 
     return SuccessResponse(
         data=orders,
-        message="Pedidos retornados com sucesso"
+        message="Pedidos retornado com sucesso"
     )
 
 
@@ -219,7 +219,7 @@ def create_order(order: CreateOrder, db: Session = Depends(get_db), current_user
             raise APIException(
                 code=404,
                 message="Produto não encontrado",
-                description=f"Produto com ID {item.product_id} não encontrado"
+                description=f"Produto com ID {item.product_id} não foi encontrado"
             )
         if product.stock < item.quantity:
             raise APIException(
@@ -262,7 +262,13 @@ def create_order(order: CreateOrder, db: Session = Depends(get_db), current_user
 
 
 @router.put("/update_order/{order_id}", summary="Atualizar um pedido existente")
-def update_order(order_id: int, order: UpdateOrder = None, status: StatusOrder = None, db: Session = Depends(get_db), current_user: Annotated[ClientModel, Depends(get_current_user)] = None):
+def update_order(
+        order_id: int,
+        order: UpdateOrder = None,
+        status: StatusOrder = None,
+        db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+):
     """
     Atualiza um pedido existente.
 
@@ -281,7 +287,14 @@ def update_order(order_id: int, order: UpdateOrder = None, status: StatusOrder =
         raise APIException(
             code=404,
             message="Pedido não encontrado",
-            description=f"Pedido com ID {order_id} não encontrado"
+            description=f"Pedido com ID {order_id} não foi encontrado"
+        )
+
+    if order_model.client_id != current_user.id:
+        raise APIException(
+            code=403,
+            message="Acesso negado",
+            description="Você não tem permissão para atualizar este pedido"
         )
 
     if status:
@@ -316,7 +329,7 @@ def update_order(order_id: int, order: UpdateOrder = None, status: StatusOrder =
                 raise APIException(
                     code=404,
                     message="Produto não encontrado",
-                    description=f"Produto com ID {item.product_id} não encontrado"
+                    description=f"Produto com ID {item.product_id} não foi encontrado"
                 )
 
             if product.stock < item.quantity:

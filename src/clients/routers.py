@@ -42,7 +42,7 @@ async def get_client(
         raise APIException(
             code=404,
             message="Cliente não encontrado",
-            description="O cliente com o ID informado não foi encontrado"
+            description=f"O cliente com o ID {current_user.id} não foi encontrado"
         )
 
     return SuccessResponse(
@@ -115,8 +115,8 @@ async def create_client(
     if client_email or client_cpf:
         raise APIException(
             code=409,
-            description="Já existe um cliente com esse email ou cpf",
-            message="Email ou CPF já cadastrado"
+            message="Email ou CPF já cadastrado",
+            description="Já existe um cliente com esse email ou cpf"
         )
 
     user_email = get_user_by_email(client.email, db)
@@ -135,8 +135,8 @@ async def create_client(
     if not re.match(cpf_regex, client.cpf):
         raise APIException(
             code=400,
-            description="CPF inválido",
-            message="O CPF deve estar no formato 123.456.789-09 ou 12345678909"
+            message="CPF inválido",
+            description="O CPF deve estar no formato 123.456.789-09 ou 12345678909"
         )
 
     # Expressão regular para telefone
@@ -146,8 +146,8 @@ async def create_client(
     if not re.match(phone_regex, client.phone):
         raise APIException(
             code=400,
-            description="Telefone inválido",
-            message="O telefone deve estar no formato (12) 93456-7890 ou 12934567890"
+            message="Telefone inválido",
+            description = "O telefone deve estar no formato (12) 93456-7890 ou 12934567890",
         )
 
     client_model = ClientModel(
@@ -184,14 +184,13 @@ async def update_client(
     Returns:
         SuccessResponse: Resposta de sucesso com os dados do cliente atualizado.
     """
-    # client_model = get_client_by_id(id_client, db)
     client_model = get_client_by_id(current_user.id, db)
 
     if not client_model:
         raise APIException(
             code=404,
             message="Cliente não encontrado",
-            description="O cliente com o ID informado não foi encontrado"
+            description=f"O cliente com o ID {current_user.id} não foi encontrado"
         )
 
     # Verifica duplicidade de email
@@ -202,8 +201,8 @@ async def update_client(
         if client_email or user_email:
             raise APIException(
                 code=409,
-                description="Já existe um cliente ou usuário com esse email",
-                message="Email já cadastrado"
+                message="Email já cadastrado",
+                description = "Já existe um cliente ou usuário com esse email"
             )
 
     # Verifica duplicidade de CPF
@@ -214,8 +213,8 @@ async def update_client(
         if client_cpf:
             raise APIException(
                 code=409,
-                description="Já existe um cliente com esse CPF",
-                message="CPF já cadastrado"
+                message="CPF já cadastrado",
+                description="Já existe um cliente com esse CPF"
             )
 
         # Valida formato do CPF
@@ -235,8 +234,8 @@ async def update_client(
         if not re.match(phone_regex, client.phone):
             raise APIException(
                 code=400,
-                description="Telefone inválido",
-                message="O telefone deve estar no formato (12) 93456-7890 ou 12934567890"
+                message="Telefone inválido",
+                description="O telefone deve estar no formato (12) 93456-7890 ou 12934567890",
             )
 
     # Atualiza os dados do cliente
@@ -291,7 +290,7 @@ async def delete_client(
         raise APIException(
             code=404,
             message="Cliente não encontrado",
-            description="O cliente com o ID informado não foi encontrado"
+            description=f"O cliente com o ID {current_user.id} não foi encontrado"
         )
 
     # Verifica se o cliente está associado a algum usuário
