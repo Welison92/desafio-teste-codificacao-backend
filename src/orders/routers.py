@@ -1,4 +1,4 @@
-
+from typing import Annotated
 from typing import Optional
 
 from fastapi import APIRouter, Depends
@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
+from src.auth.jwt_auth import get_current_user
+from src.clients.models import ClientModel
 from src.orders.crud import get_order_by_id, get_order_detail_by_id, get_all_orders_detail
 from src.orders.models import OrderModel, OrderItemModel
 from src.orders.schemas import CreateOrder, StatusOrder, UpdateOrder, OrderOutput, OrderItem
@@ -19,13 +21,14 @@ router = APIRouter(
 
 
 @router.get("/get_detail_order/{order_id}", summary="Obter informações de um pedido específico")
-def get_order(order_id: int, db: Session = Depends(get_db)):
+def get_order(order_id: int, db: Session = Depends(get_db), current_user: Annotated[ClientModel, Depends(get_current_user)] = None):
     """
     Obtém um pedido pelo ID.
 
     Args:
         order_id (int): ID do pedido.
         db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
     Returns:
         OrderOutput: Detalhes do pedido.
     """
@@ -66,7 +69,8 @@ def get_orders(
         category: str = None,
         start_date: str = None,
         end_date: str = None,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
     Obtém todos os pedidos com detalhes.
@@ -79,6 +83,7 @@ def get_orders(
         start_date (str): Data de início no formato YYYY-MM-DD (opcional).
         end_date (str): Data de término no formato YYYY-MM-DD (opcional).
         db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
     Returns:
         List[OrderOutput]: Lista de pedidos com detalhes.
     """
@@ -195,13 +200,14 @@ def get_orders(
 
 
 @router.post("/create_order", summary="Criar um novo pedido com itens")
-def create_order(order: CreateOrder, db: Session = Depends(get_db)):
+def create_order(order: CreateOrder, db: Session = Depends(get_db), current_user: Annotated[ClientModel, Depends(get_current_user)] = None):
     """
     Cria um novo pedido com itens.
 
     Args:
         order (CreateOrder): Dados do pedido a ser criado.
         db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados do pedido criado.
     """
@@ -225,7 +231,7 @@ def create_order(order: CreateOrder, db: Session = Depends(get_db)):
 
     # Criar pedido e itens
     new_order = OrderModel(
-        client_id=order.client_id,
+        client_id=current_user.id,
         status=StatusOrder.PENDENTE,
         created_at=datetime.now()
     )
@@ -256,7 +262,19 @@ def create_order(order: CreateOrder, db: Session = Depends(get_db)):
 
 
 @router.put("/update_order/{order_id}", summary="Atualizar um pedido existente")
-def update_order(order_id: int, order: UpdateOrder = None, status: StatusOrder = None, db: Session = Depends(get_db)):
+def update_order(order_id: int, order: UpdateOrder = None, status: StatusOrder = None, db: Session = Depends(get_db), current_user: Annotated[ClientModel, Depends(get_current_user)] = None):
+    """
+    Atualiza um pedido existente.
+
+    Args:
+        order_id (int): ID do pedido a ser atualizado.
+        order (UpdateOrder): Dados do pedido a serem atualizados.
+        status (StatusOrder): Novo status do pedido (opcional).
+        db (Session): Sessão do banco de dados.
+        current_user (ClientModel): Cliente autenticado.
+    Returns:
+        SuccessResponse: Resposta de sucesso com os dados do pedido atualizado.
+    """
     order_model = get_order_by_id(order_id, db)
 
     if not order_model:

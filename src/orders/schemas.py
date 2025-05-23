@@ -16,7 +16,6 @@ class CreateOrder(BaseModel):
     """
     Schema para criação de um novo pedido.
     """
-    client_id: int
     items: List[OrderItem]
 
     class Config:
