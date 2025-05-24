@@ -20,8 +20,14 @@ router = APIRouter(
 )
 
 
-@router.get("/get_detail_order/{order_id}", summary="Obter informações de um pedido específico")
-def get_order(order_id: int, db: Session = Depends(get_db), current_user: Annotated[ClientModel, Depends(get_current_user)] = None):
+@router.get(
+    "/get_detail_order/{order_id}",
+    summary="Obter informações de um pedido específico"
+)
+def get_order(
+        order_id: int, db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+):
     """
     Obtém um pedido pelo ID.
 
@@ -63,7 +69,12 @@ def get_order(order_id: int, db: Session = Depends(get_db), current_user: Annota
     )
 
 
-@router.get("/get_orders", summary="Listar todos os pedidos, incluindo os seguintes filtros: período, seção dos produtos, id_pedido, status do pedido e cliente")
+@router.get(
+    "/get_orders",
+    summary="Listar todos os pedidos, incluindo os seguintes "
+            "filtros: período, seção dos produtos, id_pedido, "
+            "status do pedido e cliente"
+)
 def get_orders(
         order_id: int = None,
         client_id: int = None,
@@ -130,13 +141,20 @@ def get_orders(
             )
 
     if category:
-        orders = [order for order in orders if any(item.product.section.upper() == category.upper() for item in order.items)]
+        orders = [
+            order for order in orders
+            if any(
+                item.product.section.upper() == category.upper()
+                for item in order.items
+            )
+                  ]
 
         if not orders:
             raise APIException(
                 code=404,
                 message="Nenhum pedido encontrado",
-                description=f"Nenhum pedido encontrado para a categoria {category}"
+                description=f"Nenhum pedido encontrado para "
+                            f"a categoria {category}"
             )
 
     # Verifica se as datas de início e término foram fornecidas
@@ -144,11 +162,14 @@ def get_orders(
         try:
             filtered_orders = []
             # Converter start_date para datetime, se fornecida
-            start_datetime = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d") \
+                if start_date else None
 
-            # Converter end_date para datetime, incluindo o final do dia, se fornecida
-            end_datetime = (datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1) - timedelta(
-                seconds=1)) if end_date else None
+            # Converter end_date para datetime, incluindo o final do dia,
+            # se fornecida
+            end_datetime = (datetime.strptime(end_date, "%Y-%m-%d")
+                            + timedelta(days=1)
+                            - timedelta(seconds=1)) if end_date else None
 
             for order in orders:
                 include_order = True
@@ -167,7 +188,8 @@ def get_orders(
                 raise APIException(
                     code=404,
                     message="Nenhum pedido encontrado",
-                    description=f"Nenhum pedido encontrado entre as datas {start_date} e {end_date}"
+                    description=f"Nenhum pedido encontrado "
+                                f"entre as datas {start_date} e {end_date}"
                 )
         except ValueError:
             raise APIException(
@@ -179,7 +201,9 @@ def get_orders(
     # Calcular o total de itens e o preço total de cada pedido
     for order in orders:
         total_itens = sum(item.quantity for item in order.items)
-        total_price = sum(item.quantity * item.unit_price for item in order.items)
+        total_price = sum(
+            item.quantity * item.unit_price for item in order.items
+        )
 
         order.total_itens = total_itens
         order.total_price = total_price
@@ -205,7 +229,10 @@ def get_orders(
 
 
 @router.post("/create_order", summary="Criar um novo pedido com itens")
-def create_order(order: CreateOrder, db: Session = Depends(get_db), current_user: Annotated[ClientModel, Depends(get_current_user)] = None):
+def create_order(
+        order: CreateOrder, db: Session = Depends(get_db),
+        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+):
     """
     Cria um novo pedido com itens.
 
@@ -225,7 +252,8 @@ def create_order(order: CreateOrder, db: Session = Depends(get_db), current_user
             raise APIException(
                 code=404,
                 message="Produto não encontrado",
-                description=f"Produto com ID {item.product_id} não foi encontrado"
+                description=f"Produto com ID {item.product_id} não "
+                            f"foi encontrado"
             )
 
         # Verifica se o estoque é suficiente
@@ -233,8 +261,9 @@ def create_order(order: CreateOrder, db: Session = Depends(get_db), current_user
             raise APIException(
                 code=400,
                 message="Estoque insuficiente",
-                description=f"Produto com ID {product.id} não tem estoque suficiente. "
-                            f"Disponível: {product.stock}, Solicitado: {item.quantity}"
+                description=f"Produto com ID {product.id} não tem estoque "
+                            f"suficiente. Disponível: {product.stock}, "
+                            f"Solicitado: {item.quantity}"
             )
 
     # Cria o modelo do pedido
@@ -271,7 +300,10 @@ def create_order(order: CreateOrder, db: Session = Depends(get_db), current_user
     )
 
 
-@router.put("/update_order/{order_id}", summary="Atualizar um pedido existente")
+@router.put(
+    "/update_order/{order_id}",
+    summary="Atualizar um pedido existente"
+)
 def update_order(
         order_id: int,
         order: UpdateOrder = None,
@@ -343,7 +375,8 @@ def update_order(
                 raise APIException(
                     code=404,
                     message="Produto não encontrado",
-                    description=f"Produto com ID {item.product_id} não foi encontrado"
+                    description=f"Produto com ID {item.product_id} "
+                                f"não foi encontrado"
                 )
 
             # Verifica se o estoque é suficiente
@@ -351,8 +384,9 @@ def update_order(
                 raise APIException(
                     code=400,
                     message="Estoque insuficiente",
-                    description=f"Produto {product.name} não tem estoque suficiente. "
-                                f"Disponível: {product.stock}, Solicitado: {item.quantity}"
+                    description=f"Produto {product.name} não tem estoque "
+                                f"suficiente. Disponível: {product.stock}, "
+                                f"Solicitado: {item.quantity}"
                 )
 
             # Cria o modelo do item do pedido
@@ -375,6 +409,7 @@ def update_order(
         data=None,
         message="Pedido atualizado com sucesso"
     )
+
 
 @router.delete("/delete_order/{order_id}", summary="Excluir um pedido")
 def delete_order(

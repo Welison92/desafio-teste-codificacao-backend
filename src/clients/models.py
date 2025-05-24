@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 
 from core.database import Base
 
+
 class ClientModel(Base):
     """
     Modelo de cliente para o banco de dados.
@@ -17,4 +18,8 @@ class ClientModel(Base):
     phone = Column(String, nullable=False)
 
     # Relacionamento com a tabela de pedidos
-    orders = relationship("OrderModel", back_populates="client", cascade="all, delete-orphan")
+    orders = relationship(
+        "OrderModel",
+        back_populates="client",
+        cascade="all, delete-orphan"
+    )

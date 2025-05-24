@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from src.auth.models import UserModel
 
 
-
 def get_user_by_email(
         email: str,
         db: Session
@@ -34,4 +33,3 @@ def get_user_by_id(user_id: int, db: Session):
         encontrado.
     """
     return db.query(UserModel).filter(UserModel.id == user_id).first()
-

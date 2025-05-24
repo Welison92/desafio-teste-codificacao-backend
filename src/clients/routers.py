@@ -24,7 +24,10 @@ router = APIRouter(
 )
 
 
-@router.get("/get_detail_client", summary="Obter informações de um cliente específico")
+@router.get(
+    "/get_detail_client",
+    summary="Obter informações de um cliente específico"
+)
 async def get_client(
         db: Session = Depends(get_db),
         current_user: Annotated[ClientModel, Depends(get_current_user)] = None
@@ -44,7 +47,8 @@ async def get_client(
         raise APIException(
             code=404,
             message="Cliente não encontrado",
-            description=f"O cliente com o ID {current_user.id} não foi encontrado"
+            description=f"O cliente com o ID {current_user.id} "
+                        f"não foi encontrado"
         )
 
     return SuccessResponse(
@@ -53,8 +57,11 @@ async def get_client(
     )
 
 
-@router.get("/get_clients", summary="Listar todos os clientes, com suporte a"
-                         "paginação e filtro por nome e email")
+@router.get(
+    "/get_clients",
+    summary="Listar todos os clientes, com suporte a"
+            "paginação e filtro por nome e email"
+)
 async def get_clients(
         name: str = None,
         email: str = None,
@@ -74,7 +81,8 @@ async def get_clients(
         db (Session): Sessão do banco de dados.
         current_user (ClientModel): Cliente autenticado.
     Returns:
-        SuccessResponse: Resposta de sucesso com os dados dos clientes encontrados.
+        SuccessResponse: Resposta de sucesso com os dados
+        dos clientes encontrados.
     """
     clients = db.query(ClientModel)
 
@@ -92,7 +100,10 @@ async def get_clients(
     )
 
 
-@router.post("/create_client", summary=" Criar um novo cliente, validando email e CPF")
+@router.post(
+    "/create_client",
+    summary=" Criar um novo cliente, validando email e CPF"
+)
 async def create_client(
         client: ClientCreate,
         db: Session = Depends(get_db),
@@ -129,7 +140,9 @@ async def create_client(
         raise APIException(
             code=404,
             message="Email não cadastrado",
-            description="O email informado não está cadastrado no sistema. Cadastre o usuário antes de cadastrar o cliente"
+            description="O email informado não está cadastrado "
+                        "no sistema. Cadastre o usuário antes "
+                        "de cadastrar o cliente"
         )
 
     # Expressão regular para CPF
@@ -141,7 +154,8 @@ async def create_client(
         raise APIException(
             code=400,
             message="CPF inválido",
-            description="O CPF deve estar no formato 123.456.789-09 ou 12345678909"
+            description="O CPF deve estar no formato "
+                        "123.456.789-09 ou 12345678909"
         )
 
     # Expressão regular para telefone
@@ -153,7 +167,8 @@ async def create_client(
         raise APIException(
             code=400,
             message="Telefone inválido",
-            description = "O telefone deve estar no formato (12) 93456-7890 ou 12934567890",
+            description="O telefone deve estar no formato "
+                        "(12) 93456-7890 ou 12934567890"
         )
 
     # Cria o modelo de cliente
@@ -162,7 +177,9 @@ async def create_client(
         last_name=client.last_name,
         email=client.email,
         cpf=client.cpf.replace(".", "").replace("-", ""),
-        phone=client.phone.replace("(", "").replace(")", "").replace("-", "").replace(" ", "")
+        phone=client.phone.translate(
+            str.maketrans('', '', '()- ')
+        )
     )
 
     db.add(client_model)
@@ -175,7 +192,10 @@ async def create_client(
     )
 
 
-@router.put("/update_client", summary="Atualizar informações de um cliente específico")
+@router.put(
+    "/update_client",
+    summary="Atualizar informações de um cliente específico"
+)
 async def update_client(
         client: ClientUpdate,
         db: Session = Depends(get_db),
@@ -189,7 +209,8 @@ async def update_client(
         db (Session): Sessão do banco de dados.
         current_user (ClientModel): Cliente autenticado.
     Returns:
-        SuccessResponse: Resposta de sucesso com os dados do cliente atualizado.
+        SuccessResponse: Resposta de sucesso com os dados do
+        cliente atualizado.
     """
     client_model = get_client_by_id(current_user.id, db)
 
@@ -198,7 +219,8 @@ async def update_client(
         raise APIException(
             code=404,
             message="Cliente não encontrado",
-            description=f"O cliente com o ID {current_user.id} não foi encontrado"
+            description=f"O cliente com o ID {current_user.id} "
+                        f"não foi encontrado"
         )
 
     # Verifica duplicidade de email
@@ -210,7 +232,8 @@ async def update_client(
             raise APIException(
                 code=409,
                 message="Email já cadastrado",
-                description = "Já existe um cliente ou usuário com esse email"
+                description="Já existe um cliente ou "
+                            "usuário com esse email"
             )
 
     # Verifica duplicidade de CPF
@@ -233,7 +256,8 @@ async def update_client(
             raise APIException(
                 code=400,
                 description="CPF inválido",
-                message="O CPF deve estar no formato 123.456.789-09 ou 12345678909"
+                message="O CPF deve estar no formato "
+                        "123.456.789-09 ou 12345678909"
             )
 
     # Valida formato do telefone
@@ -245,7 +269,8 @@ async def update_client(
             raise APIException(
                 code=400,
                 message="Telefone inválido",
-                description="O telefone deve estar no formato (12) 93456-7890 ou 12934567890",
+                description="O telefone deve estar no formato "
+                            "(12) 93456-7890 ou 12934567890",
             )
 
     # Atualiza os dados do cliente
@@ -266,10 +291,14 @@ async def update_client(
             db.refresh(user_mail)
 
     if client.cpf:
-        client_model.cpf = client.cpf.replace(".", "").replace("-", "")
+        client_model.cpf = client.cpf.translate(
+            str.maketrans('', '', '.-')
+        )
 
     if client.phone:
-        client_model.phone = client.phone.replace("(", "").replace(")", "").replace("-", "").replace(" ", "")
+        client_model.phone = client.phone.translate(
+            str.maketrans('', '', '()- ')
+        )
 
     db.commit()
     db.refresh(client_model)
@@ -301,11 +330,14 @@ async def delete_client(
         raise APIException(
             code=404,
             message="Cliente não encontrado",
-            description=f"O cliente com o ID {current_user.id} não foi encontrado"
+            description=f"O cliente com o ID {current_user.id} "
+                        f"não foi encontrado"
         )
 
     # Buscar todos os pedidos associados ao cliente
-    orders = db.query(OrderModel).filter(OrderModel.client_id == client_model.id).all()
+    orders = db.query(OrderModel).filter(
+        OrderModel.client_id == client_model.id
+    ).all()
 
     if orders:
         for order in orders:

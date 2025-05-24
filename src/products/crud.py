@@ -26,4 +26,6 @@ def get_product_by_barcode(barcode: str, db: Session):
     Returns:
         ProductModel: O produto correspondente ao código de barras fornecido.
     """
-    return db.query(ProductModel).filter(ProductModel.barcode == barcode).first()
+    return db.query(ProductModel).filter(
+        ProductModel.barcode == barcode
+    ).first()

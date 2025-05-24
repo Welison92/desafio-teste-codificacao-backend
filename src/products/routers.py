@@ -26,24 +26,31 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Raiz do projeto
 IMAGES_DIR = BASE_DIR / "static" / "images"  # Diretório das imagens
 
 
-@router.get("/get_detail_product/{product_id}", summary="Obter informações de um produto específico")
+@router.get(
+    "/get_detail_product/{product_id}",
+    summary="Obter informações de um produto específico"
+)
 async def get_product(
         product_id: int,
         db: Session = Depends(get_db),
         current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
-    Obtém detalhes de um produto específico, incluindo uma lista de URLs de imagens.
+    Obtém detalhes de um produto específico, incluindo uma
+    lista de URLs de imagens.
 
     Args:
         product_id (int): ID do produto.
         db (Session): Sessão do banco de dados.
         current_user (ClientModel): Cliente autenticado.
     Returns:
-        SuccessResponse: Detalhes do produto, incluindo lista de URLs de imagens.
+        SuccessResponse: Detalhes do produto, incluindo
+        lista de URLs de imagens.
     """
 
-    product = db.query(ProductModel).filter(ProductModel.id == product_id).first()
+    product = db.query(ProductModel).filter(
+        ProductModel.id == product_id
+    ).first()
 
     # Verifica se o produto existe
     if not product:
@@ -71,8 +78,11 @@ async def get_product(
     )
 
 
-@router.get("/get_products",
-            summary="Listar todos os produtos, com suporte a paginação e filtros por categoria, preço e disponibilidade")
+@router.get(
+    "/get_products",
+    summary="Listar todos os produtos, com suporte a paginação e "
+            "filtros por categoria, preço e disponibilidade"
+)
 async def get_products(
         category: str = None,
         price: float = None,
@@ -105,7 +115,8 @@ async def get_products(
         products = products.filter(ProductModel.price <= price)
 
     if available is not None:
-        products = products.filter(ProductModel.stock > 0) if available else products.filter(ProductModel.stock == 0)
+        products = products.filter(ProductModel.stock > 0) \
+            if available else products.filter(ProductModel.stock == 0)
 
     # Paginando os resultados
     products = products.offset((page - 1) * limit).limit(limit).all()
@@ -127,8 +138,13 @@ async def get_products(
     )
 
 
-@router.post("/create_product",
-             summary="Criar um novo produto, contendo os seguintes atributos: descrição, valor de venda, código de barras, seção, estoque inicial, data de validade (quando aplicável) e várias imagens.")
+@router.post(
+    "/create_product",
+    summary="Criar um novo produto, contendo os seguintes "
+            "atributos: descrição, valor de venda, código de "
+            "barras, seção, estoque inicial, data de validade "
+            "(quando aplicável) e várias imagens."
+)
 async def create_product(
         description: str,
         price: float,
@@ -163,7 +179,8 @@ async def create_product(
         raise APIException(
             code=409,
             message="Código de barras já cadastrado",
-            description="O código de barras informado já está cadastrado no sistema"
+            description="O código de barras informado "
+                        "já está cadastrado no sistema"
         )
 
     # Certifique-se de que o diretório de imagens existe
@@ -213,7 +230,10 @@ async def create_product(
     )
 
 
-@router.put("/update_product/{product_id}", summary="Atualizar informações de um produto específico")
+@router.put(
+    "/update_product/{product_id}",
+    summary="Atualizar informações de um produto específico"
+)
 async def update_product(
         product_id: int,
         description: str = None,
@@ -227,7 +247,8 @@ async def update_product(
         current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
-    Atualiza um produto existente e, opcionalmente, adiciona ou substitui imagens.
+    Atualiza um produto existente e, opcionalmente,
+    adiciona ou substitui imagens.
 
     Args:
         product_id (int): ID do produto a ser atualizado.
@@ -267,7 +288,8 @@ async def update_product(
             raise APIException(
                 code=409,
                 message="Código de barras já cadastrado",
-                description="O código de barras informado já está cadastrado no sistema"
+                description="O código de barras informado já está "
+                            "cadastrado no sistema"
             )
 
         product.barcode = barcode
@@ -288,7 +310,9 @@ async def update_product(
                 Path(image.image_url).unlink()
 
         # Deleta as imagens existentes do banco de dados
-        db.query(ProductImageModel).filter(ProductImageModel.product_id == product_id).delete()
+        db.query(ProductImageModel).filter(
+            ProductImageModel.product_id == product_id
+        ).delete()
 
         # Certifique-se de que o diretório de imagens existe
         IMAGES_DIR.mkdir(parents=True, exist_ok=True)

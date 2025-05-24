@@ -24,7 +24,8 @@ def get_order_detail_by_id(order_id: int, db: Session):
         order_id (int): O ID do pedido a ser obtido.
         db (Session): A sessão do banco de dados.
     Returns:
-        OrderModel: O pedido correspondente ao ID fornecido, incluindo os itens do pedido.
+        OrderModel: O pedido correspondente ao ID fornecido,
+        incluindo os itens do pedido.
     """
     return (
         db.query(OrderModel)
@@ -41,7 +42,8 @@ def get_all_orders_detail(db: Session):
     Args:
         db (Session): A sessão do banco de dados.
     Returns:
-        list[OrderModel]: Uma lista de todos os pedidos, incluindo os itens do pedido.
+        list[OrderModel]: Uma lista de todos os pedidos,
+        incluindo os itens do pedido.
     """
     return (
         db.query(OrderModel)

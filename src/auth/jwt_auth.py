@@ -178,7 +178,10 @@ def require_role(role: str):
             HTTPException: Se o usuário não tiver a função necessária.
         """
         if current_user.role.value != role:
-            raise HTTPException(status_code=403, detail="Operation not permitted")
+            raise HTTPException(
+                status_code=403,
+                detail="Operation not permitted"
+            )
         return current_user
 
     return role_checker

@@ -18,7 +18,11 @@ class ProductModel(Base):
     expiry_date = Column(Date, nullable=True)
 
     # Relacionamento com a tabela de imagens
-    images = relationship("ProductImageModel", back_populates="product", cascade="all, delete-orphan")
+    images = relationship(
+        "ProductImageModel",
+        back_populates="product",
+        cascade="all, delete-orphan"
+    )
 
 
 class ProductImageModel(Base):

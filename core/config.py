@@ -32,7 +32,6 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # 30 minutos
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 dias
 
-
     class Config:
         env_file = os.path.join(os.path.dirname(__file__), '../env/.env')
         env_file_encoding = 'utf-8'
