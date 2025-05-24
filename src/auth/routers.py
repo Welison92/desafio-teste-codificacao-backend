@@ -44,11 +44,12 @@ async def create_user(user: UserAuth, db: Session = Depends(get_db)):
     # Verifica se o email já está cadastrado
     if user_email or client_email:
         raise APIException(
-            code=400,
+            code=409,
             message="Email já cadastrado",
             description="O email informado já está cadastrado no sistema"
         )
 
+    # Cria o modelo de usuário
     user_model = UserModel(
         email=user.email,
         hashed_password=get_password(user.password)
@@ -59,7 +60,7 @@ async def create_user(user: UserAuth, db: Session = Depends(get_db)):
     db.refresh(user_model)
 
     return SuccessResponse(
-        code=200,
+        data=None,
         message="Usuário criado com sucesso"
     )
 
@@ -73,15 +74,14 @@ def authenticate(
     Autentica um usuário.
 
     Args:
-        email (str): Email do usuário.
-        password (str): Senha do usuário.
+        data (OAuth2PasswordRequestForm): Dados de autenticação do usuário.
         db (Session): Sessão do banco de dados.
     Returns:
-        Optional[UserModel]: Instância do modelo de usuário autenticado
-        ou None se falhar.
+        dict: Dicionário contendo o token de acesso e refresh token.
     """
     user = get_user_by_email(data.username, db)
 
+    # Verifica se as credenciais estão corretas
     if not user or not verify_password(data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -126,6 +126,7 @@ async def refresh_token(
 
     user = get_user_by_id(token_data.sub, db)
 
+    # Verifica se o usuário existe
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

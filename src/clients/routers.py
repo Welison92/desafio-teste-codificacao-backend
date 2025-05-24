@@ -114,6 +114,7 @@ async def create_client(
         db
     )
 
+    # Verifica duplicidade de email e CPF
     if client_email or client_cpf:
         raise APIException(
             code=409,
@@ -123,6 +124,7 @@ async def create_client(
 
     user_email = get_user_by_email(client.email, db)
 
+    # Verifica se o email está associado a um usuário
     if not user_email:
         raise APIException(
             code=404,
@@ -134,6 +136,7 @@ async def create_client(
     # Aceita: 123.456.789-09 ou 12345678909
     cpf_regex = r'^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$'
 
+    # Verifica se o CPF está no formato correto
     if not re.match(cpf_regex, client.cpf):
         raise APIException(
             code=400,
@@ -145,6 +148,7 @@ async def create_client(
     # Aceita: (12) 934567-8901 ou 129345678901
     phone_regex = r'^\(?\d{2}\)? ?\d{4,5}-?\d{4}$'
 
+    # Verifica se o telefone está no formato correto
     if not re.match(phone_regex, client.phone):
         raise APIException(
             code=400,
@@ -152,6 +156,7 @@ async def create_client(
             description = "O telefone deve estar no formato (12) 93456-7890 ou 12934567890",
         )
 
+    # Cria o modelo de cliente
     client_model = ClientModel(
         name=client.name,
         last_name=client.last_name,
@@ -188,6 +193,7 @@ async def update_client(
     """
     client_model = get_client_by_id(current_user.id, db)
 
+    # Verifica se o cliente existe
     if not client_model:
         raise APIException(
             code=404,
@@ -222,6 +228,7 @@ async def update_client(
         # Valida formato do CPF
         cpf_regex = r'^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$'
 
+        # Verifica se o CPF está no formato correto
         if not re.match(cpf_regex, client.cpf):
             raise APIException(
                 code=400,
@@ -233,6 +240,7 @@ async def update_client(
     if client.phone:
         phone_regex = r'^\(?\d{2}\)? ?\d{4,5}-?\d{4}$'
 
+        # Verifica se o telefone está no formato correto
         if not re.match(phone_regex, client.phone):
             raise APIException(
                 code=400,
@@ -288,6 +296,7 @@ async def delete_client(
     """
     client_model = get_client_by_id(current_user.id, db)
 
+    # Verifica se o cliente existe
     if not client_model:
         raise APIException(
             code=404,

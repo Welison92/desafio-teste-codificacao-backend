@@ -160,7 +160,23 @@ async def get_current_user(
 
 
 def require_role(role: str):
+    """
+    Verifica se o usuário atual tem a função especificada.
+
+    Args:
+        role (str): A função necessária para acessar o recurso.
+    Returns:
+        Callable: Um callable que verifica a função do usuário.
+    """
     def role_checker(current_user: UserModel = Depends(get_current_user)):
+        """
+        Verifica se o usuário atual tem a função especificada.
+
+        Args:
+            current_user (UserModel): O usuário atual.
+        Raises:
+            HTTPException: Se o usuário não tiver a função necessária.
+        """
         if current_user.role.value != role:
             raise HTTPException(status_code=403, detail="Operation not permitted")
         return current_user

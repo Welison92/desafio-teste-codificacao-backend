@@ -34,6 +34,7 @@ def get_order(order_id: int, db: Session = Depends(get_db), current_user: Annota
     """
     order = get_order_detail_by_id(order_id, db)
 
+    # Verifica se o pedido existe
     if not order:
         raise APIException(
             code=404,
@@ -45,6 +46,7 @@ def get_order(order_id: int, db: Session = Depends(get_db), current_user: Annota
     total_itens = sum(item.quantity for item in order.items)
     total_price = sum(item.quantity * item.unit_price for item in order.items)
 
+    # Cria o objeto de saída com os detalhes do pedido
     order_output = OrderOutput(
         id=order.id,
         client_id=order.client_id,
@@ -89,6 +91,7 @@ def get_orders(
     """
     orders = get_all_orders_detail(db)
 
+    # Verifica se há pedidos
     if not orders:
         raise APIException(
             code=404,
@@ -136,11 +139,13 @@ def get_orders(
                 description=f"Nenhum pedido encontrado para a categoria {category}"
             )
 
+    # Verifica se as datas de início e término foram fornecidas
     if start_date or end_date:
         try:
             filtered_orders = []
             # Converter start_date para datetime, se fornecida
             start_datetime = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
+
             # Converter end_date para datetime, incluindo o final do dia, se fornecida
             end_datetime = (datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1) - timedelta(
                 seconds=1)) if end_date else None
@@ -179,7 +184,7 @@ def get_orders(
         order.total_itens = total_itens
         order.total_price = total_price
 
-    # Retornar os pedidos com os detalhes
+    # Criar a lista de pedidos com os detalhes
     orders = [
         OrderOutput(
             id=order.id,
@@ -215,12 +220,15 @@ def create_order(order: CreateOrder, db: Session = Depends(get_db), current_user
     for item in order.items:
         product = get_product_by_id(item.product_id, db)
 
+        # Verifica se o produto existe
         if not product:
             raise APIException(
                 code=404,
                 message="Produto não encontrado",
                 description=f"Produto com ID {item.product_id} não foi encontrado"
             )
+
+        # Verifica se o estoque é suficiente
         if product.stock < item.quantity:
             raise APIException(
                 code=400,
@@ -229,16 +237,18 @@ def create_order(order: CreateOrder, db: Session = Depends(get_db), current_user
                             f"Disponível: {product.stock}, Solicitado: {item.quantity}"
             )
 
-    # Criar pedido e itens
+    # Cria o modelo do pedido
     new_order = OrderModel(
         client_id=current_user.id,
         status=StatusOrder.PENDENTE,
         created_at=datetime.now()
     )
+
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
 
+    # Cria os itens do pedido
     for item in order.items:
         order_item = OrderItemModel(
             order_id=new_order.id,
@@ -283,6 +293,7 @@ def update_order(
     """
     order_model = get_order_by_id(order_id, db)
 
+    # Verifica se o pedido existe
     if not order_model:
         raise APIException(
             code=404,
@@ -290,6 +301,7 @@ def update_order(
             description=f"Pedido com ID {order_id} não foi encontrado"
         )
 
+    # Verifica se o pedido pertence ao cliente autenticado
     if order_model.client_id != current_user.id:
         raise APIException(
             code=403,
@@ -302,6 +314,7 @@ def update_order(
             db.delete(order_model)
             db.commit()
         elif status == StatusOrder.CANCELADO:
+            # Reverter o estoque dos itens do pedido
             for item in order_model.items:
                 product = get_product_by_id(item.product_id, db)
                 product.stock += item.quantity
@@ -325,6 +338,7 @@ def update_order(
         for item in order.items:
             product = get_product_by_id(item.product_id, db)
 
+            # Verifica se o produto existe
             if not product:
                 raise APIException(
                     code=404,
@@ -332,6 +346,7 @@ def update_order(
                     description=f"Produto com ID {item.product_id} não foi encontrado"
                 )
 
+            # Verifica se o estoque é suficiente
             if product.stock < item.quantity:
                 raise APIException(
                     code=400,
@@ -340,7 +355,7 @@ def update_order(
                                 f"Disponível: {product.stock}, Solicitado: {item.quantity}"
                 )
 
-            # Criar novo item do pedido
+            # Cria o modelo do item do pedido
             order_item = OrderItemModel(
                 order_id=order_model.id,
                 product_id=item.product_id,
@@ -379,6 +394,7 @@ def delete_order(
     """
     order_model = get_order_by_id(order_id, db)
 
+    # Verifica se o pedido existe
     if not order_model:
         raise APIException(
             code=404,
@@ -386,6 +402,7 @@ def delete_order(
             description=f"Pedido com ID {order_id} não foi encontrado"
         )
 
+    # Verifica se o pedido pertence ao cliente autenticado
     if order_model.client_id != current_user.id:
         raise APIException(
             code=403,

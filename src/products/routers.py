@@ -33,7 +33,7 @@ async def get_product(
         current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
-    Obtém um produto pelo ID, incluindo as URLs das imagens associadas.
+    Obtém detalhes de um produto específico, incluindo uma lista de URLs de imagens.
 
     Args:
         product_id (int): ID do produto.
@@ -45,6 +45,7 @@ async def get_product(
 
     product = db.query(ProductModel).filter(ProductModel.id == product_id).first()
 
+    # Verifica se o produto existe
     if not product:
         raise APIException(
             code=404,
@@ -52,7 +53,7 @@ async def get_product(
             description=f"O produto com o ID {product_id} não foi encontrado"
         )
 
-
+    # Cria o objeto de saída com os dados do produto
     product_data = ProductOutput(
         id=product.id,
         description=product.description,
@@ -68,6 +69,7 @@ async def get_product(
         data=product_data,
         message="Dados do produto retornado com sucesso"
     )
+
 
 @router.get("/get_products",
             summary="Listar todos os produtos, com suporte a paginação e filtros por categoria, preço e disponibilidade")
@@ -105,6 +107,7 @@ async def get_products(
     if available is not None:
         products = products.filter(ProductModel.stock > 0) if available else products.filter(ProductModel.stock == 0)
 
+    # Paginando os resultados
     products = products.offset((page - 1) * limit).limit(limit).all()
 
     return SuccessResponse(
@@ -134,7 +137,7 @@ async def create_product(
         stock: int,
         expiry_date: str = None,
         db: Session = Depends(get_db),
-        files: List[UploadFile] = File(...),  # Alterado para aceitar lista de arquivos
+        files: List[UploadFile] = File(...),
         current_user: Annotated[ClientModel, Depends(get_current_user)] = None
 ):
     """
@@ -153,12 +156,12 @@ async def create_product(
     Returns:
         SuccessResponse: Resposta de sucesso.
     """
-    # Verifica se o código de barras já existe
     barcode_model = get_product_by_barcode(barcode, db)
 
+    # Verifica se o código de barras já está cadastrado
     if barcode_model:
         raise APIException(
-            code=400,
+            code=409,
             message="Código de barras já cadastrado",
             description="O código de barras informado já está cadastrado no sistema"
         )
@@ -169,7 +172,7 @@ async def create_product(
     # Obtém o maior ID existente ou 0 se a tabela estiver vazia
     ultimo_id = db.query(func.max(ProductModel.id)).scalar() or 0
 
-    # Cria o produto no banco de dados
+    # Cria o modelo do produto
     novo_produto = ProductModel(
         description=description,
         price=price,
@@ -242,6 +245,7 @@ async def update_product(
     """
     product = get_product_by_id(product_id, db)
 
+    # Verifica se o produto existe
     if not product:
         raise APIException(
             code=404,
@@ -258,9 +262,10 @@ async def update_product(
     if barcode:
         barcode_model = get_product_by_barcode(barcode, db)
 
+        # Verifica se o código de barras já está cadastrado
         if barcode_model and barcode_model.id != product_id:
             raise APIException(
-                code=400,
+                code=409,
                 message="Código de barras já cadastrado",
                 description="O código de barras informado já está cadastrado no sistema"
             )
@@ -282,6 +287,7 @@ async def update_product(
             if Path(image.image_url).exists():
                 Path(image.image_url).unlink()
 
+        # Deleta as imagens existentes do banco de dados
         db.query(ProductImageModel).filter(ProductImageModel.product_id == product_id).delete()
 
         # Certifique-se de que o diretório de imagens existe
@@ -295,6 +301,7 @@ async def update_product(
             with open(caminho_arquivo, "wb") as objeto_arquivo:
                 objeto_arquivo.write(await arquivo.read())
 
+            # Cria o modelo da imagem
             nova_imagem = ProductImageModel(
                 product_id=product_id,
                 image_url=str(caminho_arquivo)
@@ -329,6 +336,7 @@ async def delete_product(
     """
     product = get_product_by_id(product_id, db)
 
+    # Verifica se o produto existe
     if not product:
         raise APIException(
             code=404,
