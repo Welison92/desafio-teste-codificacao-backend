@@ -12,9 +12,8 @@ from core.config import settings
 from core.database import Base
 from src.auth.models import UserModel
 from src.clients.models import ClientModel
-from src.orders.models import OrderModel, OrderItemModel
+from src.orders.models import OrderItemModel, OrderModel
 from src.products.models import ProductModel
-
 
 load_dotenv(path.join(path.dirname(__file__), '../env/.env'))
 

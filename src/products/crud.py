@@ -1,5 +1,7 @@
+# Imports de terceiros
 from sqlalchemy.orm import Session
 
+# Imports locais
 from src.products.models import ProductModel
 
 

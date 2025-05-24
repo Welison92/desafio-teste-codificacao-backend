@@ -1,5 +1,7 @@
+# Imports do sistema
 from typing import Optional
 
+# Imports de terceiros
 from pydantic import BaseModel, EmailStr, Field
 
 

@@ -1,15 +1,15 @@
 # Imports de terceiros
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 
 # Imports locais
 from core.exceptions import APIException
 from src.auth.routers import router as auth_router
 from src.clients.routers import router as client_router
-from src.products.routers import router as product_router
 from src.orders.routers import router as order_router
+from src.products.routers import router as product_router
 
 # Inicialização do FastAPI
 app = FastAPI(

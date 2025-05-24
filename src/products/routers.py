@@ -1,20 +1,21 @@
 # Imports de terceiros
+from pathlib import Path
 from typing import Annotated, List
 
-from fastapi import APIRouter, UploadFile, File
+# Imports de terceiros
+from fastapi import APIRouter, File, UploadFile
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 
 # Imports locais
 from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
 from src.auth.jwt_auth import get_current_user
 from src.clients.models import ClientModel
-from src.products.crud import get_product_by_id, get_product_by_barcode
-from src.products.models import ProductModel, ProductImageModel
+from src.products.crud import get_product_by_barcode, get_product_by_id
+from src.products.models import ProductImageModel, ProductModel
 from src.products.schemas import ProductOutput
-from pathlib import Path
-from sqlalchemy.sql import func
 
 router = APIRouter(
     prefix="/products",

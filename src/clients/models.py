@@ -1,6 +1,8 @@
+# Imports de terceiros
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
+# Imports locais
 from core.database import Base
 
 

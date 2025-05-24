@@ -2,21 +2,20 @@
 from fastapi import APIRouter, Body, HTTPException
 from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordRequestForm
+from jose import jwt
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from starlette import status
 
-from core.config import settings
 # Imports locais
+from core.config import settings
 from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
 from src.auth.crud import get_user_by_email, get_user_by_id
-from src.auth.jwt_auth import get_password, verify_password, create_access_token, create_refresh_token
-
-from jose import jwt
-
+from src.auth.jwt_auth import (create_access_token, create_refresh_token,
+                               get_password, verify_password)
 from src.auth.models import UserModel
-from src.auth.schemas import UserAuth, TokenPayload
+from src.auth.schemas import TokenPayload, UserAuth
 from src.clients.crud import get_client_by_email
 
 router = APIRouter(

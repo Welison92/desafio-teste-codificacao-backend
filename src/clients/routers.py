@@ -1,7 +1,8 @@
-# Imports de terceiros
+# Imports do sistema
 import re
 from typing import Annotated
 
+# Imports de terceiros
 from fastapi import APIRouter
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
@@ -11,7 +12,8 @@ from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
 from src.auth.crud import get_user_by_email
 from src.auth.jwt_auth import get_current_user
-from src.clients.crud import get_client_by_email, get_client_by_cpf, get_client_by_id
+from src.clients.crud import (get_client_by_cpf, get_client_by_email,
+                              get_client_by_id)
 from src.clients.models import ClientModel
 from src.clients.schemas import ClientCreate, ClientOutput, ClientUpdate
 from src.orders.models import OrderModel

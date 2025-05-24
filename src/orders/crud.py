@@ -1,5 +1,7 @@
+# Imports de terceiros
 from sqlalchemy.orm import Session, joinedload
 
+# Imports locais
 from src.orders.models import OrderModel
 
 

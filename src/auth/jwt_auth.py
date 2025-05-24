@@ -1,17 +1,20 @@
+# Imports do sistema
+from datetime import datetime, timedelta, timezone
+from typing import Any, Union
+
+# Imports de terceiros
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
+from passlib.context import CryptContext
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
-from datetime import datetime, timezone, timedelta
+
+# Imports locais
 from core.config import settings
 from core.database import get_db
 from src.auth.crud import get_user_by_id
 from src.auth.models import UserModel
-from pydantic import ValidationError
-from passlib.context import CryptContext
-
-from typing import Any, Union
-
 from src.auth.schemas import TokenPayload
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")

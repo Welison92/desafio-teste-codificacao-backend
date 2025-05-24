@@ -1,7 +1,9 @@
-from pydantic import BaseModel
+# Imports do sistema
+from enum import Enum
 from typing import List
 
-from enum import Enum
+# Imports de terceiros
+from pydantic import BaseModel
 
 
 class OrderItem(BaseModel):

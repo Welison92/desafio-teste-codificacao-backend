@@ -1,6 +1,11 @@
-from sqlalchemy import Column, Integer, String
-from core.database import Base
+# Imports do sistema
 import enum
+
+# Imports de terceiros
+from sqlalchemy import Column, Integer, String
+
+# Imports locais
+from core.database import Base
 
 
 class UserRole(enum.Enum):

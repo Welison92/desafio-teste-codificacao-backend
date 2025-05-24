@@ -1,6 +1,9 @@
-from typing import Optional, List
-from pydantic import BaseModel
+# Imports do sistema
 from datetime import date
+from typing import List, Optional
+
+# Imports de terceiros
+from pydantic import BaseModel
 
 
 class ProductOutput(BaseModel):

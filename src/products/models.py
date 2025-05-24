@@ -1,5 +1,8 @@
-from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey
+# Imports de terceiros
+from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+
+# Imports locais
 from core.database import Base
 
 

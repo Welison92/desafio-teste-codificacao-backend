@@ -1,16 +1,21 @@
-from typing import Annotated
-from typing import Optional
+# Imports do sistema
+from datetime import datetime, timedelta
+from typing import Annotated, Optional
 
+# Imports de terceiros
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+
+# Imports locais
 from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
 from src.auth.jwt_auth import get_current_user
 from src.clients.models import ClientModel
-from src.orders.crud import get_order_by_id, get_order_detail_by_id, get_all_orders_detail
-from src.orders.models import OrderModel, OrderItemModel
-from src.orders.schemas import CreateOrder, StatusOrder, UpdateOrder, OrderOutput, OrderItem
+from src.orders.crud import (get_all_orders_detail, get_order_by_id,
+                             get_order_detail_by_id)
+from src.orders.models import OrderItemModel, OrderModel
+from src.orders.schemas import (CreateOrder, OrderItem, OrderOutput,
+                                StatusOrder, UpdateOrder)
 from src.products.crud import get_product_by_id
 
 router = APIRouter(
