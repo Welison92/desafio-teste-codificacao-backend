@@ -1,6 +1,6 @@
 # Imports de terceiros
 from pathlib import Path
-from typing import Annotated, List
+from typing import Annotated, List, Union
 
 # Imports de terceiros
 from fastapi import APIRouter, File, UploadFile
@@ -12,7 +12,7 @@ from sqlalchemy.sql import func
 from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
 from src.auth.jwt_auth import get_current_user
-from src.clients.models import ClientModel
+from src.auth.models import UserModel
 from src.products.crud import get_product_by_barcode, get_product_by_id
 from src.products.models import ProductImageModel, ProductModel
 from src.products.schemas import ProductOutput
@@ -34,7 +34,7 @@ IMAGES_DIR = BASE_DIR / "static" / "images"  # Diretório das imagens
 async def get_product(
         product_id: int,
         db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Obtém detalhes de um produto específico, incluindo uma
@@ -43,7 +43,7 @@ async def get_product(
     Args:
         product_id (int): ID do produto.
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         SuccessResponse: Detalhes do produto, incluindo
         lista de URLs de imagens.
@@ -91,7 +91,7 @@ async def get_products(
         page: int = 1,
         limit: int = 10,
         db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Obtém uma lista de produtos com suporte a paginação e filtros.
@@ -103,7 +103,7 @@ async def get_products(
         page (int): Número da página.
         limit (int): Limite de produtos por página.
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         list[ProductModel]: Lista de produtos filtrados e paginados.
     """
@@ -155,7 +155,7 @@ async def create_product(
         expiry_date: str = None,
         db: Session = Depends(get_db),
         files: List[UploadFile] = File(...),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Cria um novo produto com suporte a múltiplas imagens.
@@ -169,7 +169,7 @@ async def create_product(
         expiry_date (str): Data de validade do produto (opcional).
         db (Session): Sessão do banco de dados.
         files (List[UploadFile]): Lista de arquivos de imagens do produto.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso.
     """
@@ -245,7 +245,7 @@ async def update_product(
         expiry_date: str = None,
         db: Session = Depends(get_db),
         files: List[UploadFile] = File(None),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Atualiza um produto existente e, opcionalmente,
@@ -261,7 +261,7 @@ async def update_product(
         expiry_date (str): Nova data de validade do produto (opcional).
         db (Session): Sessão do banco de dados.
         files (List[UploadFile]): Lista de novos arquivos de imagem (opcional).
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso.
     """
@@ -347,7 +347,7 @@ async def update_product(
 async def delete_product(
         product_id: int,
         db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Exclui um produto existente.
@@ -355,7 +355,7 @@ async def delete_product(
     Args:
         product_id (int): ID do produto a ser excluído.
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso.
     """

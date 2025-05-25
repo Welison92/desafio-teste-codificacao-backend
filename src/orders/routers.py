@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
 from src.auth.jwt_auth import get_current_user
-from src.clients.models import ClientModel
+from src.auth.models import UserModel
+from src.clients.crud import get_client_by_email
 from src.orders.crud import (get_all_orders_detail, get_order_by_id,
                              get_order_detail_by_id)
 from src.orders.models import OrderItemModel, OrderModel
@@ -31,7 +32,7 @@ router = APIRouter(
 )
 def get_order(
         order_id: int, db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Obtém um pedido pelo ID.
@@ -39,7 +40,7 @@ def get_order(
     Args:
         order_id (int): ID do pedido.
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         OrderOutput: Detalhes do pedido.
     """
@@ -88,7 +89,7 @@ def get_orders(
         start_date: str = None,
         end_date: str = None,
         db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Obtém todos os pedidos com detalhes.
@@ -101,7 +102,7 @@ def get_orders(
         start_date (str): Data de início no formato YYYY-MM-DD (opcional).
         end_date (str): Data de término no formato YYYY-MM-DD (opcional).
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         List[OrderOutput]: Lista de pedidos com detalhes.
     """
@@ -236,7 +237,7 @@ def get_orders(
 @router.post("/create_order", summary="Criar um novo pedido com itens")
 def create_order(
         order: CreateOrder, db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Cria um novo pedido com itens.
@@ -244,7 +245,7 @@ def create_order(
     Args:
         order (CreateOrder): Dados do pedido a ser criado.
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados do pedido criado.
     """
@@ -273,7 +274,7 @@ def create_order(
 
     # Cria o modelo do pedido
     new_order = OrderModel(
-        client_id=current_user.id,
+        client_id=get_client_by_email(current_user.email, db).id,
         status=StatusOrder.PENDENTE,
         created_at=datetime.now()
     )
@@ -314,7 +315,7 @@ def update_order(
         order: UpdateOrder = None,
         status: StatusOrder = None,
         db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Atualiza um pedido existente.
@@ -324,7 +325,7 @@ def update_order(
         order (UpdateOrder): Dados do pedido a serem atualizados.
         status (StatusOrder): Novo status do pedido (opcional).
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados do pedido atualizado.
     """
@@ -339,7 +340,7 @@ def update_order(
         )
 
     # Verifica se o pedido pertence ao cliente autenticado
-    if order_model.client_id != current_user.id:
+    if order_model.client_id != get_client_by_email(current_user.email, db).id:
         raise APIException(
             code=403,
             message="Acesso negado",
@@ -420,7 +421,7 @@ def update_order(
 def delete_order(
         order_id: int,
         db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Exclui um pedido existente.
@@ -428,7 +429,7 @@ def delete_order(
     Args:
         order_id (int): ID do pedido a ser excluído.
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados do pedido excluído.
     """
@@ -443,7 +444,7 @@ def delete_order(
         )
 
     # Verifica se o pedido pertence ao cliente autenticado
-    if order_model.client_id != current_user.id:
+    if order_model.client_id != get_client_by_email(current_user.email, db).id:
         raise APIException(
             code=403,
             message="Acesso negado",

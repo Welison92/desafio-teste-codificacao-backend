@@ -12,8 +12,8 @@ from core.database import get_db
 from core.exceptions import APIException, SuccessResponse
 from src.auth.crud import get_user_by_email
 from src.auth.jwt_auth import get_current_user
-from src.clients.crud import (get_client_by_cpf, get_client_by_email,
-                              get_client_by_id)
+from src.auth.models import UserModel
+from src.clients.crud import (get_client_by_cpf, get_client_by_email)
 from src.clients.models import ClientModel
 from src.clients.schemas import ClientCreate, ClientOutput, ClientUpdate
 from src.orders.models import OrderModel
@@ -32,25 +32,24 @@ router = APIRouter(
 )
 async def get_client(
         db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Obtém um cliente pelo ID.
 
     Args:
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         ClientModel: Instância do modelo de cliente.
     """
-    client = get_client_by_id(current_user.id, db)
+    client = get_client_by_email(current_user.email, db)
 
     if not client:
         raise APIException(
             code=404,
             message="Cliente não encontrado",
-            description=f"O cliente com o ID {current_user.id} "
-                        f"não foi encontrado"
+            description="O cliente não foi encontrado"
         )
 
     return SuccessResponse(
@@ -70,7 +69,7 @@ async def get_clients(
         page: int = 1,
         limit: int = 10,
         db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Obtém uma lista de clientes.
@@ -81,7 +80,7 @@ async def get_clients(
         page (int): Número da página para paginação.
         limit (int): Limite de resultados por página.
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados
         dos clientes encontrados.
@@ -109,7 +108,7 @@ async def get_clients(
 async def create_client(
         client: ClientCreate,
         db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Cria um novo cliente.
@@ -117,7 +116,7 @@ async def create_client(
     Args:
         client (ClientCreate): Dados do cliente a ser criado.
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados do cliente criado.
     """
@@ -201,7 +200,7 @@ async def create_client(
 async def update_client(
         client: ClientUpdate,
         db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Atualiza as informações de um cliente.
@@ -209,20 +208,19 @@ async def update_client(
     Args:
         client (ClientUpdate): Dados do cliente a serem atualizados.
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados do
         cliente atualizado.
     """
-    client_model = get_client_by_id(current_user.id, db)
+    client_model = get_client_by_email(current_user.email, db)
 
     # Verifica se o cliente existe
     if not client_model:
         raise APIException(
             code=404,
             message="Cliente não encontrado",
-            description=f"O cliente com o ID {current_user.id} "
-                        f"não foi encontrado"
+            description="O cliente não foi encontrado"
         )
 
     # Verifica duplicidade de email
@@ -314,26 +312,25 @@ async def update_client(
 @router.delete("/delete_client", summary="Excluir um cliente")
 async def delete_client(
         db: Session = Depends(get_db),
-        current_user: Annotated[ClientModel, Depends(get_current_user)] = None
+        current_user: Annotated[UserModel, Depends(get_current_user)] = None
 ):
     """
     Deleta um cliente.
 
     Args:
         db (Session): Sessão do banco de dados.
-        current_user (ClientModel): Cliente autenticado.
+        current_user (UserModel): Cliente autenticado.
     Returns:
         SuccessResponse: Resposta de sucesso com os dados do cliente deletado.
     """
-    client_model = get_client_by_id(current_user.id, db)
+    client_model = get_client_by_email(current_user.email, db)
 
     # Verifica se o cliente existe
     if not client_model:
         raise APIException(
             code=404,
             message="Cliente não encontrado",
-            description=f"O cliente com o ID {current_user.id} "
-                        f"não foi encontrado"
+            description="O cliente não foi encontrado"
         )
 
     # Buscar todos os pedidos associados ao cliente
