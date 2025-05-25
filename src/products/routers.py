@@ -1,6 +1,6 @@
 # Imports de terceiros
 from pathlib import Path
-from typing import Annotated, List, Union
+from typing import Annotated, List
 
 # Imports de terceiros
 from fastapi import APIRouter, File, UploadFile

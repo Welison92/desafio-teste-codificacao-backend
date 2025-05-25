@@ -122,7 +122,9 @@ async def create_client(
     """
     client_email = get_client_by_email(client.email, db)
     client_cpf = get_client_by_cpf(
-        client.cpf.replace(".", "").replace("-", ""),
+        client.cpf.translate(
+            str.maketrans('', '', '.-')
+        ),
         db
     )
 
@@ -177,7 +179,9 @@ async def create_client(
         name=client.name,
         last_name=client.last_name,
         email=client.email,
-        cpf=client.cpf.replace(".", "").replace("-", ""),
+        cpf=client.cpf.translate(
+            str.maketrans('', '', '.-')
+        ),
         phone=client.phone.translate(
             str.maketrans('', '', '()- ')
         )
@@ -238,7 +242,9 @@ async def update_client(
 
     # Verifica duplicidade de CPF
     if client.cpf:
-        cleaned_cpf = client.cpf.replace(".", "").replace("-", "")
+        cleaned_cpf = client.cpf.translate(
+            str.maketrans('', '', '.-')
+        )
         client_cpf = get_client_by_cpf(cleaned_cpf, db)
 
         if client_cpf:
