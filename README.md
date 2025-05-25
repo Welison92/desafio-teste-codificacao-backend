@@ -125,7 +125,7 @@ Certifique-se de ter os seguintes requisitos instalados:
 2. **Clone o repositório**:
 
    ```bash
-   git clone https://github.com/Welison92/desafio-teste-codificacao-backend.git.
+   git https://github.com/Welison92/desafio-teste-codificacao-backend.git
    ```
 
 3. **Configure as variáveis de ambiente**:
