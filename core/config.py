@@ -23,7 +23,10 @@ class Settings(BaseSettings):
 
     DATABASE_HOST: str = os.getenv("DATABASE_HOST")
     DATABASE_PORT: int = os.getenv("DATABASE_PORT")
-    DATABASE_URL: str = os.getenv("DATABASE_URL")
+    DATABASE_URL: str = os.getenv("DATABASE_URL",
+                                  f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@"
+                                  f"{DATABASE_HOST}:{DATABASE_PORT}/{POSTGRES_DB}"
+                                  )
 
     # JWT
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY")
