@@ -110,7 +110,9 @@ async def get_products(
     products = db.query(ProductModel)
 
     if category:
-        products = products.filter(ProductModel.section == category)
+        products = products.filter(
+            func.upper(ProductModel.section) == category.upper()
+        )
 
     if price:
         products = products.filter(ProductModel.price <= price)
