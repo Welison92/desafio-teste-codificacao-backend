@@ -390,7 +390,7 @@ def update_order(
                 raise APIException(
                     code=400,
                     message="Estoque insuficiente",
-                    description=f"Produto {product.name} não tem estoque "
+                    description=f"O produto não tem estoque "
                                 f"suficiente. Disponível: {product.stock}, "
                                 f"Solicitado: {item.quantity}"
                 )
